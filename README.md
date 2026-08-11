@@ -1,39 +1,45 @@
-# Lane86 網球場預約行事曆 - Tennis Court Schedule
+# Lane86 網球場預約行事曆
 
-A React-based calendar app for managing tennis court bookings at Lane86, backed by Firebase Realtime Database for live multi-user sync across all browsers and devices.
+一個以 React + Vite 建立的網球場預約行事曆，支援貼上解析、月曆檢視、Firebase 即時同步，以及匿名登入的多人共用流程。
 
-## Features
+## 亮點
 
-- 📅 Interactive 7-column monthly calendar
-- 🎾 Court A & B tracking with colour-coded status pills
-- 📊 Status tracking: 已預約 (Approved), 臨櫃已預約 (Counter-approved), 不同意 (Rejected)
-- 🔄 Real-time sync via Firebase Realtime Database — all users see the same data instantly
-- 🔐 Anonymous Authentication — no sign-up required
-- 📋 Bulk import via text paste-and-parse
-- 🗑️ Delete events directly from the calendar or detail panel (syncs to DB immediately)
-- 📱 Responsive design (desktop & mobile)
+- 📅 互動式月曆，支援 A / B 場的每日預約檢視
+- 🎾 依據狀態顯示不同顏色，方便辨識已預約、臨櫃預約與不同意
+- 🔄 透過 Firebase Realtime Database 提供即時同步，所有開啟中的分頁都能即時更新
+- 🔐 使用 Firebase Anonymous Authentication，無需註冊即可使用
+- 📋 支援貼上多筆預約資料並自動解析
+- 🗑️ 可直接從行事曆或詳細面板刪除預約
+- 📱 支援桌面與手機版寬度調整
 
-## Architecture
+## 快速開始
 
-```
-Browser → Firebase Anonymous Auth → Firebase Realtime Database
-                                          ↕  real-time listener
-                                    All other open tabs/browsers
-```
+1. 安裝依賴
+   ```bash
+   npm install
+   ```
 
-All bookings are stored in Firebase under `/items`. Every connected client receives live updates the moment any user adds or deletes an event. There is no backend server — Firebase handles everything.
+2. 複製 Firebase 設定範本
+   ```bash
+   cp .env.example .env.local
+   ```
+   然後依照 [FIREBASE_SETUP.md](FIREBASE_SETUP.md) 的步驟填入你的 Firebase 參數。
 
-## Prerequisites
+3. 啟動本機開發伺服器
+   ```bash
+   npm run dev
+   ```
+   開發頁面會在 http://localhost:3000 開啟。
 
-- Node.js 16+ and npm
-- A Firebase project with:
-  - **Realtime Database** enabled (region: `asia-southeast1` recommended)
-  - **Anonymous Authentication** enabled
-  - Database rules set to allow read/write on `/items`
+## Firebase 設定
 
-## Firebase Database Rules
+專案需要以下內容：
 
-In Firebase Console → Realtime Database → Rules:
+- Firebase Realtime Database 已啟用
+- Firebase Authentication 已啟用匿名登入
+- Realtime Database 規則允許讀寫 `/items`
+
+建議的測試規則如下：
 
 ```json
 {
@@ -46,94 +52,49 @@ In Firebase Console → Realtime Database → Rules:
 }
 ```
 
-## Local Development
+完整步驟請參閱 [FIREBASE_SETUP.md](FIREBASE_SETUP.md)。
 
-1. Install dependencies:
-```bash
-npm install
-```
+## GitHub Pages 部署
 
-2. Create `.env.local` in the project root with your Firebase credentials:
-```bash
-VITE_FIREBASE_API_KEY=YOUR_API_KEY
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
-VITE_FIREBASE_APP_ID=YOUR_APP_ID
-```
-
-3. Start the dev server:
-```bash
-npm run dev
-# Opens at http://localhost:3000
-```
-
-> For full Firebase setup steps, see [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
-
-## Deploy to GitHub Pages
-
-`.env.local` must exist **before** building — Vite substitutes `VITE_*` variables at build time.
+部署前請確認 `.env.local` 已存在，因為 Vite 會在建置時把 `VITE_*` 環境變數嵌入到前端 bundle 中。
 
 ```bash
 npm run deploy
 ```
 
-This runs `vite build` (embedding Firebase credentials from `.env.local`) then publishes `dist/` to the `gh-pages` branch.
+此指令會先執行 `vite build`，再把 `dist/` 發佈到 GitHub Pages 的 `gh-pages` 分支。
 
-> ⚠️ **Never commit `.env.local`** — it is already in `.gitignore`. The file must be present locally each time you run `npm run deploy`.
+> ⚠️ 請勿把 `.env.local` 提交到 GitHub；該檔案已被加入 `.gitignore`。
 
-## Usage
+若你使用 GitHub Actions 自動部署，請在 Repository 的 Secrets 或 Variables 中設定 Firebase 相關環境變數，部署流程會自動帶入。
 
-### Adding Bookings
+## 資料格式
 
-Paste schedule text into the textarea and click **解析並加入行事曆**:
+每筆預約至少包含三行：
 
-```
-星空球場網球 B
-已預約
-租借日期：2026-08-13 | 18:00,19:00
-```
+| 欄位 | 範例 | 說明 |
+|------|------|------|
+| 場地 | `星空球場網球 A` | 需以 A 或 B 結尾 |
+| 狀態 | `已預約` | 可用 `已預約` / `臨櫃已預約` / `不同意` |
+| 日期與時段 | `租借日期：2026-08-13 | 18:00,19:00` | 可一次輸入多個時段 |
 
-Multiple bookings can be pasted at once. Duplicate entries are automatically skipped.
+## 專案結構
 
-### Deleting Bookings
+- [src/App.jsx](src/App.jsx)：主畫面、月曆邏輯與貼上解析流程
+- [src/firebase.js](src/firebase.js)：Firebase 初始化與即時資料存取
+- [src/components](src/components)：共用 UI 元件
+- [.github/workflows/deploy.yml](.github/workflows/deploy.yml)：GitHub Pages 自動部署流程
 
-- Hover over an event pill on the calendar → click **×**
-- Or click a date → click the **trash icon** in the detail panel
+## 技術堆疊
 
-Deletions sync to Firebase immediately and disappear from all connected clients.
+- React 18
+- Vite 5
+- Tailwind CSS 3
+- Framer Motion
+- Lucide React
+- Firebase Realtime Database
+- Firebase Anonymous Authentication
 
-### Viewing Bookings
-
-- Click any date to see full details in the right panel
-- Use **‹** / **›** to navigate months
-- **今天** jumps back to the current month
-
-## Data Format
-
-Each booking requires three lines:
-
-| Line | Example | Notes |
-|------|---------|-------|
-| Court name | `星空球場網球 A` | Must end with `A` or `B` |
-| Status | `已預約` | 已預約 / 臨櫃已預約 / 不同意 |
-| Date & times | `租借日期：2026-08-13 \| 18:00,19:00` | Multiple times comma-separated |
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| UI Framework | React 18 |
-| Build Tool | Vite 5 |
-| Styling | Tailwind CSS 3 |
-| Animations | Framer Motion |
-| Icons | Lucide React |
-| Database | Firebase Realtime Database |
-| Auth | Firebase Anonymous Authentication |
-| Hosting | GitHub Pages (`gh-pages` branch) |
-
-## License
+## 授權
 
 MIT

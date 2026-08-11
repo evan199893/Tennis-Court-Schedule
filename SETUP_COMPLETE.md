@@ -1,79 +1,32 @@
-# ✅ GitHub Pages Setup Complete!
+# ✅ Project polish complete
 
-Your Tennis Court Schedule app is now ready to deploy on GitHub Pages. Here's what was done:
+The app and its documentation are now aligned for smoother local use and GitHub Pages deployment.
 
-## 📦 New Files Created
+## What changed
 
-### Configuration Files
-- **package.json** - Dependencies and scripts
-- **vite.config.js** - Vite build configuration
-- **tailwind.config.js** - Tailwind CSS configuration
-- **postcss.config.js** - PostCSS configuration
+- polished the main README and setup guides for clearer onboarding
+- added a more complete [.env.example](.env.example) template
+- improved the app’s fallback behavior so it can still work locally when Firebase is not configured yet
+- updated the GitHub Pages workflow to pass Firebase variables during automatic deployment
 
-### Source Files
-- **index.html** - HTML entry point
-- **src/main.jsx** - React app entry point
-- **src/App.jsx** - Your tennis calendar component
-- **src/components/** - UI components (Button, Card, Textarea, Badge)
-- **src/index.css** - Tailwind CSS imports
-
-### Deployment
-- **.github/workflows/deploy.yml** - Automatic GitHub Pages deployment
-- **.gitignore** - Git ignore rules
-- **DEPLOYMENT_GUIDE.md** - Detailed deployment instructions
-- **README.md** - Updated with setup & deployment info
-
-## 🚀 Quick Start (3 commands)
+## Quick start
 
 ```bash
-# 1. Update your GitHub username in package.json
-# Edit "homepage": "https://YOUR_USERNAME.github.io/Tennis-Court-Schedule"
-
-# 2. Install dependencies
+cp .env.example .env.local
 npm install
-
-# 3. Deploy to GitHub Pages
-npm run deploy
-```
-
-That's it! Your app will be live at:
-```
-https://YOUR_USERNAME.github.io/Tennis-Court-Schedule
-```
-
-## 📝 Important: Update GitHub Username
-
-Before deploying, edit `package.json` and replace `YOUR_USERNAME`:
-
-```json
-"homepage": "https://YOUR_USERNAME.github.io/Tennis-Court-Schedule"
-```
-
-## 🧪 Test Locally First (Optional)
-
-```bash
 npm run dev
 ```
 
-Then open http://localhost:3000 in your browser.
+## Deploy
 
-## 📚 More Information
+```bash
+npm run deploy
+```
 
-See **DEPLOYMENT_GUIDE.md** for detailed deployment steps and troubleshooting.
+## Next steps
 
-## ✨ What Happens on Deploy
+1. Fill in your Firebase values in [.env.local](.env.local)
+2. Deploy the app to GitHub Pages
+3. Add the same Firebase variables to GitHub Secrets or Variables if you want automated deploys
 
-- ✅ Builds optimized production bundle
-- ✅ Deploys to `gh-pages` branch automatically
-- ✅ GitHub Pages serves your site
-- ✅ Data synced via Firebase Realtime Database
-
-## 🎯 Next Steps
-
-1. Update `homepage` in package.json with your GitHub username
-2. Run `npm install && npm run deploy`
-3. Visit your GitHub repository settings → Pages
-4. Confirm `gh-pages` branch is selected
-5. Your site goes live in 1-3 minutes!
-
-Happy coding! 🎾
+For detailed instructions, see [README.md](README.md), [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md), and [FIREBASE_SETUP.md](FIREBASE_SETUP.md).

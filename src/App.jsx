@@ -17,7 +17,7 @@ import { Button } from "./components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/Card";
 import { Textarea } from "./components/Textarea";
 import { Badge } from "./components/Badge";
-import { initializeAuth, onAuthChange, getItems, addItem, removeItemFromFirebase } from "./firebase";
+import { initializeAuth, onAuthChange, getItems, addItem, removeItemFromFirebase, database } from "./firebase";
 
 const INITIAL_TEXT = `Happy Hour星空網球場A
 已預約
@@ -88,6 +88,7 @@ const INITIAL_TEXT = `Happy Hour星空網球場A
 
 const STATUS_OPTIONS = ["已預約", "臨櫃已預約", "不同意"];
 const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+const STORAGE_KEY = "tennis-calendar-items-v1";
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -228,13 +229,13 @@ export default function TennisCalendar() {
     // Set up auth state listener
     unsubscribeAuth = onAuthChange((currentUser) => {
       setUser(currentUser);
-      
+
       // Clean up previous items listener if it exists
       if (unsubscribeItems) {
         unsubscribeItems();
         unsubscribeItems = null;
       }
-      
+
       if (currentUser) {
         // Listen to Firebase items with real-time updates
         unsubscribeItems = getItems((firebaseItems) => {
@@ -248,11 +249,10 @@ export default function TennisCalendar() {
           setLoaded(true);
         });
       } else {
-        // Sign in anonymously if not already signed in
+        // Sign in anonymously if possible; fall back to local storage otherwise.
         initializeAuth().catch(() => {
-          // Fallback to local data if auth fails
           try {
-            const saved = localStorage.getItem("tennis-calendar-items-v1");
+            const saved = localStorage.getItem(STORAGE_KEY);
             const firstItems = saved ? JSON.parse(saved) : parseSchedule(INITIAL_TEXT);
             setItems(firstItems);
             setLoaded(true);
@@ -274,6 +274,16 @@ export default function TennisCalendar() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!loaded || user || database) return;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.warn("Unable to save fallback items to localStorage", error);
+    }
+  }, [items, loaded, user]);
 
   const itemsByDate = useMemo(() => {
     const map = {};
@@ -326,7 +336,29 @@ export default function TennisCalendar() {
 
     const existingKeys = new Set(items.map(itemId));
     const fresh = parsed.filter((x) => !existingKeys.has(itemId(x)));
-    
+
+    if (!database || !user) {
+      const nextItems = [
+        ...items,
+        ...fresh.map((item) => ({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          date: item.date,
+          court: item.court,
+          status: item.status,
+          times: item.times,
+          source: item.source,
+        })),
+      ];
+      setItems(nextItems);
+      setInput("");
+      setMessage(
+        fresh.length
+          ? `已加入 ${fresh.length} 筆預約${parsed.length > fresh.length ? `，略過 ${parsed.length - fresh.length} 筆重複資料` : ""}（本機暫存）。`
+          : "這些資料已存在，未重複加入。"
+      );
+      return;
+    }
+
     // Wait for all Firebase writes to complete
     try {
       await Promise.all(
@@ -359,6 +391,13 @@ export default function TennisCalendar() {
   }
 
   function removeItem(id) {
+    if (!database || !user) {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      setMessage("已刪除預約（本機暫存）。");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
+
     removeItemFromFirebase(id)
       .then(() => {
         setMessage("已刪除預約。");
@@ -393,7 +432,7 @@ export default function TennisCalendar() {
             </div>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Lane86網球場預約行事曆</h1>
             <p className="mt-1 text-sm text-slate-500">
-              今天是 {today.getFullYear()} 年 {today.getMonth() + 1} 月 {today.getDate()} 日，自動儲存在此瀏覽器。
+              今天是 {today.getFullYear()} 年 {today.getMonth() + 1} 月 {today.getDate()} 日，資料會即時同步至 Firebase；若未設定 Firebase，則回退到此瀏覽器本機暫存。
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 md:flex">
