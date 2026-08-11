@@ -17,6 +17,7 @@ import { Button } from "./components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/Card";
 import { Textarea } from "./components/Textarea";
 import { Badge } from "./components/Badge";
+import { initializeAuth, onAuthChange, getItems, addItem, removeItemFromFirebase } from "./firebase";
 
 const INITIAL_TEXT = `Happy Hour星空網球場A
 已預約
@@ -217,31 +218,51 @@ export default function TennisCalendar() {
   const [message, setMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [loaded, setLoaded] = useState(false);
+  const [user, setUser] = useState(null);
 
+  // Initialize Firebase authentication and real-time sync
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("tennis-calendar-items-v1");
-      const firstItems = saved ? JSON.parse(saved) : parseSchedule(INITIAL_TEXT);
-      setItems(firstItems);
-      if (!saved && firstItems.length) {
-        const newest = [...firstItems].sort((a, b) => b.date.localeCompare(a.date))[0];
-        const d = new Date(`${newest.date}T00:00:00`);
-        setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
-        setSelectedDate(newest.date);
+    // Set up auth state listener
+    const unsubscribeAuth = onAuthChange((currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser) {
+        // Listen to Firebase items
+        const unsubscribeItems = getItems((firebaseItems) => {
+          setItems(firebaseItems);
+          if (firebaseItems.length) {
+            const newest = [...firebaseItems].sort((a, b) => b.date.localeCompare(a.date))[0];
+            const d = new Date(`${newest.date}T00:00:00`);
+            setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+            setSelectedDate(newest.date);
+          }
+          setLoaded(true);
+        });
+        return unsubscribeItems;
+      } else {
+        // Sign in anonymously if not already signed in
+        initializeAuth().catch(() => {
+          // Fallback to local data if auth fails
+          try {
+            const saved = localStorage.getItem("tennis-calendar-items-v1");
+            const firstItems = saved ? JSON.parse(saved) : parseSchedule(INITIAL_TEXT);
+            setItems(firstItems);
+            setLoaded(true);
+          } catch {
+            setItems(parseSchedule(INITIAL_TEXT));
+            setLoaded(true);
+          }
+        });
       }
-    } catch {
-      setItems(parseSchedule(INITIAL_TEXT));
-    }
-    setLoaded(true);
-  }, []);
+    });
 
-  useEffect(() => {
-    if (loaded) localStorage.setItem("tennis-calendar-items-v1", JSON.stringify(items));
-  }, [items, loaded]);
+    return unsubscribeAuth;
+  }, []);
 
   const itemsByDate = useMemo(() => {
     const map = {};
     for (const item of items) {
+      if (item.status === "不同意") continue; // Skip rejected items
       if (!map[item.date]) map[item.date] = [];
       map[item.date].push(item);
     }
@@ -280,7 +301,7 @@ export default function TennisCalendar() {
     return results;
   }, [month]);
 
-  function addParsed() {
+  async function addParsed() {
     const parsed = parseSchedule(input);
     if (!parsed.length) {
       setMessage("找不到可辨識的資料。請包含場地、狀態與「租借日期：YYYY-MM-DD | HH:MM」。");
@@ -289,7 +310,25 @@ export default function TennisCalendar() {
 
     const existingKeys = new Set(items.map(itemId));
     const fresh = parsed.filter((x) => !existingKeys.has(itemId(x)));
-    setItems((prev) => [...prev, ...fresh]);
+    
+    // Wait for all Firebase writes to complete
+    try {
+      await Promise.all(
+        fresh.map((item) =>
+          addItem({
+            date: item.date,
+            court: item.court,
+            status: item.status,
+            times: item.times,
+            source: item.source,
+          })
+        )
+      );
+    } catch (error) {
+      console.error("Error adding items to Firebase:", error);
+      setMessage("新增預約時出錯，請稍後再試。");
+      return;
+    }
 
     const first = parsed[0];
     const d = new Date(`${first.date}T00:00:00`);
@@ -304,7 +343,9 @@ export default function TennisCalendar() {
   }
 
   function removeItem(id) {
-    setItems((prev) => prev.filter((x) => x.id !== id));
+    removeItemFromFirebase(id).catch((error) => {
+      console.error("Error removing item from Firebase:", error);
+    });
   }
 
   function changeMonth(delta) {
@@ -316,7 +357,7 @@ export default function TennisCalendar() {
     setSelectedDate(todayKey);
   }
 
-  const selectedItems = itemsByDate[selectedDate] || [];
+  const selectedItems = (itemsByDate[selectedDate] || []).filter((x) => x.status !== "不同意");
   const approvedCount = items.filter((x) => x.status !== "不同意").length;
 
   return (
@@ -326,9 +367,9 @@ export default function TennisCalendar() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100">🎾</span>
-              Happy Hour
+              Tennis Schedule
             </div>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">星空網球場預約行事曆</h1>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Lane86網球場預約行事曆</h1>
             <p className="mt-1 text-sm text-slate-500">
               今天是 {today.getFullYear()} 年 {today.getMonth() + 1} 月 {today.getDate()} 日，自動儲存在此瀏覽器。
             </p>

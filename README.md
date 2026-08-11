@@ -1,6 +1,6 @@
-# 星空網球場預約行事曆 - Tennis Court Schedule
+# Lane86 網球場預約行事曆 - Tennis Court Schedule
 
-A React-based calendar application for managing tennis court bookings. Features include parsing booking schedules, tracking reservation status, and organizing by date and court.
+A React-based calendar application for managing tennis court bookings at Lane86. Features include parsing booking schedules, tracking reservation status, and organizing by date and court.
 
 ## Features
 

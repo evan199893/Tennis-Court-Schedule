@@ -9,18 +9,19 @@
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "firebase": "^12.17.1",
     "framer-motion": "^10.16.16",
-    "lucide-react": "^0.292.0"
+    "lucide-react": "^0.292.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.8",
-    "tailwindcss": "^3.4.1",
-    "postcss": "^8.4.32",
     "autoprefixer": "^10.4.16",
-    "gh-pages": "^6.1.1"
+    "gh-pages": "^6.1.1",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.0.8"
   },
   "homepage": "https://evan199893.github.io/Tennis-Court-Schedule"
 }
