@@ -17,7 +17,7 @@
 4. Choose region (e.g., `asia-southeast1` for Singapore) for better latency
 5. Start in **Test mode** (for development - add security rules later)
 6. Click **Enable**
-7. Copy the **Database URL** (looks like `https://your-project.firebaseio.com`)
+7. Copy the **Database URL** (looks like `https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app`)
 
 ## Step 3: Enable Authentication
 
@@ -41,7 +41,7 @@ This allows users to access the app without logging in (perfect for shared calen
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "your-project.firebaseapp.com",
-  databaseURL: "https://your-project.firebaseio.com",
+  databaseURL: "https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "your-project-id",
   storageBucket: "your-project.appspot.com",
   messagingSenderId: "YOUR_SENDER_ID",
@@ -56,7 +56,7 @@ const firebaseConfig = {
 ```bash
 VITE_FIREBASE_API_KEY=YOUR_API_KEY
 VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+VITE_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app
 VITE_FIREBASE_PROJECT_ID=your-project-id
 VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID

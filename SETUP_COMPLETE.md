@@ -66,7 +66,7 @@ See **DEPLOYMENT_GUIDE.md** for detailed deployment steps and troubleshooting.
 - ✅ Builds optimized production bundle
 - ✅ Deploys to `gh-pages` branch automatically
 - ✅ GitHub Pages serves your site
-- ✅ Data saved in browser localStorage
+- ✅ Data synced via Firebase Realtime Database
 
 ## 🎯 Next Steps
 

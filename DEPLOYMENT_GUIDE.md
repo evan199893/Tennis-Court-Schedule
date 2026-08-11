@@ -76,7 +76,20 @@ npm run dev
 
 ## Environment Variables
 
-No environment variables are needed for basic deployment. Data is stored in browser localStorage.
+Firebase credentials must be set in `.env.local` **before** running `npm run deploy`.
+Vite embeds `VITE_*` variables at build time — if they are missing the app will load but show 0 records.
+
+```bash
+VITE_FIREBASE_API_KEY=YOUR_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
+VITE_FIREBASE_APP_ID=YOUR_APP_ID
+```
+
+> ⚠️ Never commit `.env.local` — it is in `.gitignore` for a reason.
 
 ## Need Help?
 
