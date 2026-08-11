@@ -222,13 +222,22 @@ export default function TennisCalendar() {
 
   // Initialize Firebase authentication and real-time sync
   useEffect(() => {
+    let unsubscribeAuth;
+    let unsubscribeItems;
+
     // Set up auth state listener
-    const unsubscribeAuth = onAuthChange((currentUser) => {
+    unsubscribeAuth = onAuthChange((currentUser) => {
       setUser(currentUser);
       
+      // Clean up previous items listener if it exists
+      if (unsubscribeItems) {
+        unsubscribeItems();
+        unsubscribeItems = null;
+      }
+      
       if (currentUser) {
-        // Listen to Firebase items
-        const unsubscribeItems = getItems((firebaseItems) => {
+        // Listen to Firebase items with real-time updates
+        unsubscribeItems = getItems((firebaseItems) => {
           setItems(firebaseItems);
           if (firebaseItems.length) {
             const newest = [...firebaseItems].sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -238,7 +247,6 @@ export default function TennisCalendar() {
           }
           setLoaded(true);
         });
-        return unsubscribeItems;
       } else {
         // Sign in anonymously if not already signed in
         initializeAuth().catch(() => {
@@ -256,7 +264,15 @@ export default function TennisCalendar() {
       }
     });
 
-    return unsubscribeAuth;
+    // Cleanup function that properly unsubscribes from both listeners
+    return () => {
+      if (unsubscribeAuth) {
+        unsubscribeAuth();
+      }
+      if (unsubscribeItems) {
+        unsubscribeItems();
+      }
+    };
   }, []);
 
   const itemsByDate = useMemo(() => {
@@ -343,9 +359,15 @@ export default function TennisCalendar() {
   }
 
   function removeItem(id) {
-    removeItemFromFirebase(id).catch((error) => {
-      console.error("Error removing item from Firebase:", error);
-    });
+    removeItemFromFirebase(id)
+      .then(() => {
+        setMessage("已刪除預約。");
+        setTimeout(() => setMessage(""), 2000);
+      })
+      .catch((error) => {
+        console.error("Error removing item from Firebase:", error);
+        setMessage("刪除預約時出錯，請稍後再試。");
+      });
   }
 
   function changeMonth(delta) {
