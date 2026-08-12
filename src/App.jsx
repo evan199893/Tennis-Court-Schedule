@@ -86,7 +86,7 @@ const INITIAL_TEXT = `Happy Hour星空網球場A
 已預約
 租借日期：2026-08-13 | 18:00,19:00`;
 
-const STATUS_OPTIONS = ["已預約", "臨櫃已預約", "不同意"];
+const STATUS_OPTIONS = ["已預約", "臨櫃已預約", "已結案", "不同意"];
 const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 const STORAGE_KEY = "tennis-calendar-items-v1";
 const SOURCE_REPO_URL = "https://github.com/evan199893/Tennis-Court-Schedule";
@@ -120,8 +120,18 @@ function normalizeCourt(raw = "") {
   return match ? match[1] : "未指定";
 }
 
+function extractCourtFromText(text = "") {
+  const match = text.match(/([AB])(?=\s*(?:已預約|臨櫃已預約|已結案|不同意)?\s*(?:租借日期|$))/i);
+  if (!match) return null;
+  return match[1].toUpperCase();
+}
+
 function normalizeTime(raw) {
-  const m = raw.trim().match(/^(\d{1,2}):(\d{2})$/);
+  const trimmed = raw
+    .trim()
+    .replace(/[\])}>]+$/, "")
+    .replace(/^[\[(<{]+/, "");
+  const m = trimmed.match(/^(\d{1,2}):(\d{2})$/);
   if (!m) return null;
   const h = Number(m[1]);
   const min = Number(m[2]);
@@ -145,6 +155,15 @@ function parseSchedule(text) {
   let pendingStatus = "已預約";
 
   for (const line of lines) {
+    const courtFromLine = extractCourtFromText(line);
+    const statusFromLine = STATUS_OPTIONS.find((s) => line.includes(s));
+    if (courtFromLine) {
+      pendingCourt = courtFromLine;
+    }
+    if (statusFromLine) {
+      pendingStatus = statusFromLine;
+    }
+
     const dateMatch = line.match(/租借日期\s*[：:]\s*(\d{4})[-\/]?(\d{1,2})[-\/]?(\d{1,2})\s*\|\s*(.+)$/);
     if (dateMatch) {
       const date = `${dateMatch[1]}-${pad(dateMatch[2])}-${pad(dateMatch[3])}`;
@@ -153,27 +172,21 @@ function parseSchedule(text) {
         .map(normalizeTime)
         .filter(Boolean);
 
-      if (pendingCourt && times.length) {
+      const resolvedCourt = pendingCourt || extractCourtFromText(line) || "未指定";
+      const resolvedStatus = pendingStatus || "已預約";
+
+      if (times.length) {
         results.push({
           id: `${Date.now()}-${results.length}-${Math.random()}`,
           date,
-          court: pendingCourt,
-          status: pendingStatus,
+          court: resolvedCourt,
+          status: resolvedStatus,
           times: [...new Set(times)].sort(),
           source: "貼上解析",
         });
       }
       pendingCourt = null;
       pendingStatus = "已預約";
-      continue;
-    }
-
-    if (STATUS_OPTIONS.some((s) => line.includes(s))) {
-      pendingStatus = line.includes("臨櫃已預約")
-        ? "臨櫃已預約"
-        : line.includes("不同意")
-        ? "不同意"
-        : "已預約";
       continue;
     }
 
@@ -189,6 +202,7 @@ function parseSchedule(text) {
 function statusStyle(status) {
   if (status === "不同意") return "border-rose-200 bg-rose-50 text-rose-700";
   if (status === "臨櫃已預約") return "border-amber-200 bg-amber-50 text-amber-800";
+  if (status === "已結案") return "border-slate-200 bg-slate-100 text-slate-700";
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
 }
 
@@ -498,6 +512,10 @@ export default function TennisCalendar() {
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-amber-200 rounded"></div>
                   <span className="text-slate-600">臨櫃預約</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-slate-200 rounded"></div>
+                  <span className="text-slate-600">已結案</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-rose-200 rounded"></div>
