@@ -90,6 +90,23 @@ const STATUS_OPTIONS = ["已預約", "臨櫃已預約", "不同意"];
 const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 const STORAGE_KEY = "tennis-calendar-items-v1";
 const SOURCE_REPO_URL = "https://github.com/evan199893/Tennis-Court-Schedule";
+const ALLOWED_PASSWORDS = ["1015", "1031", "1205"];
+
+function requirePassword(actionLabel) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const entered = window.prompt(
+    `Enter password to ${actionLabel}.\nAllowed passwords: ${ALLOWED_PASSWORDS.join(", ")}`
+  );
+
+  if (entered === null) {
+    return false;
+  }
+
+  return ALLOWED_PASSWORDS.includes(String(entered).trim());
+}
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -323,6 +340,11 @@ export default function TennisCalendar() {
   }, [month]);
 
   async function addParsed() {
+    if (!requirePassword("add a booking")) {
+      setMessage("Access denied. Invalid password.");
+      return;
+    }
+
     const parsed = parseSchedule(input);
     if (!parsed.length) {
       setMessage("找不到可辨識的資料。請包含場地、狀態與「租借日期：YYYY-MM-DD | HH:MM」。");
@@ -386,6 +408,11 @@ export default function TennisCalendar() {
   }
 
   function removeItem(id) {
+    if (!requirePassword("delete a booking")) {
+      setMessage("Access denied. Invalid password.");
+      return;
+    }
+
     if (!database || !user) {
       setItems((prev) => prev.filter((item) => item.id !== id));
       setMessage("已刪除預約（本機暫存）。");
