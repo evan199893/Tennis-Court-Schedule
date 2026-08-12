@@ -97,9 +97,7 @@ function requirePassword(actionLabel) {
     return false;
   }
 
-  const entered = window.prompt(
-    `Enter password to ${actionLabel}.\nAllowed passwords: ${ALLOWED_PASSWORDS.join(", ")}`
-  );
+  const entered = window.prompt(`Enter password to ${actionLabel}.`);
 
   if (entered === null) {
     return false;
