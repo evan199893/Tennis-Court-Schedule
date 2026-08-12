@@ -440,6 +440,8 @@ export default function TennisCalendar() {
 
   const selectedItems = (itemsByDate[selectedDate] || []).filter((x) => x.status !== "不同意");
   const approvedCount = items.filter((x) => x.status !== "不同意").length;
+  const todayBookings = (itemsByDate[todayKey] || []).filter((x) => x.status !== "不同意");
+  const todayBookingTimes = [...new Set(todayBookings.flatMap((item) => item.times))].sort();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/40 to-sky-50 p-3 text-slate-800 md:p-6">
@@ -452,7 +454,9 @@ export default function TennisCalendar() {
             </div>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Lane86網球場預約行事曆</h1>
             <p className="mt-1 text-sm text-slate-500">
-              今天是 {today.getFullYear()} 年 {today.getMonth() + 1} 月 {today.getDate()} 日，資料會即時同步至 Firebase；若未設定 Firebase，則回退到此瀏覽器本機暫存。
+              {todayBookings.length > 0
+                ? `今天是 ${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日，今日有 ${todayBookings.length} 筆預約，時間為 ${todayBookingTimes.join("、")}。`
+                : `今天是 ${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日，資料會即時同步至 Firebase；若未設定 Firebase，則回退到此瀏覽器本機暫存。`}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 md:flex">
@@ -592,7 +596,7 @@ export default function TennisCalendar() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ClipboardPaste className="h-5 w-5 text-emerald-600" />
-                  貼上新增預約
+                  新增預約
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
