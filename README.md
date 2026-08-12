@@ -1,45 +1,45 @@
-# Lane86 網球場預約行事曆
+# Lane86 Tennis Court Booking Calendar
 
-一個以 React + Vite 建立的網球場預約行事曆，支援貼上解析、月曆檢視、Firebase 即時同步，以及匿名登入的多人共用流程。
+A React + Vite app for managing tennis court bookings at Lane86, with paste-and-parse scheduling, Firebase real-time syncing, and anonymous multi-user access.
 
-## 亮點
+## Features
 
-- 📅 互動式月曆，支援 A / B 場的每日預約檢視
-- 🎾 依據狀態顯示不同顏色，方便辨識已預約、臨櫃預約與不同意
-- 🔄 透過 Firebase Realtime Database 提供即時同步，所有開啟中的分頁都能即時更新
-- 🔐 使用 Firebase Anonymous Authentication，無需註冊即可使用
-- 📋 支援貼上多筆預約資料並自動解析
-- 🗑️ 可直接從行事曆或詳細面板刪除預約
-- 📱 支援桌面與手機版寬度調整
+- 📅 Interactive monthly calendar with court A / B tracking
+- 🎾 Color-coded statuses for approved, counter-approved, and rejected bookings
+- 🔄 Real-time sync through Firebase Realtime Database
+- 🔐 Anonymous sign-in with Firebase, no account required
+- 📋 Bulk booking import from pasted text
+- 🗑️ Delete bookings directly from the calendar or details panel
+- 📱 Responsive layout for desktop and mobile
 
-## 快速開始
+## Quick Start
 
-1. 安裝依賴
+1. Install dependencies
    ```bash
    npm install
    ```
 
-2. 複製 Firebase 設定範本
+2. Copy the Firebase environment template
    ```bash
    cp .env.example .env.local
    ```
-   然後依照 [FIREBASE_SETUP.md](FIREBASE_SETUP.md) 的步驟填入你的 Firebase 參數。
+   Then follow the steps in [FIREBASE_SETUP.md](FIREBASE_SETUP.md) and fill in your Firebase values.
 
-3. 啟動本機開發伺服器
+3. Start the local dev server
    ```bash
    npm run dev
    ```
-   開發頁面會在 http://localhost:3000 開啟。
+   The app opens at http://localhost:3000.
 
-## Firebase 設定
+## Firebase Setup
 
-專案需要以下內容：
+This project requires:
 
-- Firebase Realtime Database 已啟用
-- Firebase Authentication 已啟用匿名登入
-- Realtime Database 規則允許讀寫 `/items`
+- Firebase Realtime Database enabled
+- Firebase Authentication with Anonymous sign-in enabled
+- Realtime Database rules allowing read/write access to `/items`
 
-建議的測試規則如下：
+Example test rules:
 
 ```json
 {
@@ -52,40 +52,40 @@
 }
 ```
 
-完整步驟請參閱 [FIREBASE_SETUP.md](FIREBASE_SETUP.md)。
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for the full setup instructions.
 
-## GitHub Pages 部署
+## GitHub Pages Deployment
 
-部署前請確認 `.env.local` 已存在，因為 Vite 會在建置時把 `VITE_*` 環境變數嵌入到前端 bundle 中。
+Before building, make sure `.env.local` exists because Vite embeds `VITE_*` variables into the production bundle.
 
 ```bash
 npm run deploy
 ```
 
-此指令會先執行 `vite build`，再把 `dist/` 發佈到 GitHub Pages 的 `gh-pages` 分支。
+This runs `vite build` and then publishes the `dist/` folder to the `gh-pages` branch.
 
-> ⚠️ 請勿把 `.env.local` 提交到 GitHub；該檔案已被加入 `.gitignore`。
+> ⚠️ Do not commit `.env.local`. It is already ignored in `.gitignore`.
 
-若你使用 GitHub Actions 自動部署，請在 Repository 的 Secrets 或 Variables 中設定 Firebase 相關環境變數，部署流程會自動帶入。
+If you use GitHub Actions for deployment, add the same Firebase variables as GitHub repository Secrets or Variables.
 
-## 資料格式
+## Data Format
 
-每筆預約至少包含三行：
+Each booking entry needs at least three lines:
 
-| 欄位 | 範例 | 說明 |
-|------|------|------|
-| 場地 | `星空球場網球 A` | 需以 A 或 B 結尾 |
-| 狀態 | `已預約` | 可用 `已預約` / `臨櫃已預約` / `不同意` |
-| 日期與時段 | `租借日期：2026-08-13 | 18:00,19:00` | 可一次輸入多個時段 |
+| Field | Example | Notes |
+|------|---------|-------|
+| Court | `星空球場網球 A` | Must end with A or B |
+| Status | `已預約` | Valid values: `已預約`, `臨櫃已預約`, `不同意` |
+| Date and time | `租借日期：2026-08-13 | 18:00,19:00` | Multiple times may be comma-separated |
 
-## 專案結構
+## Project Structure
 
-- [src/App.jsx](src/App.jsx)：主畫面、月曆邏輯與貼上解析流程
-- [src/firebase.js](src/firebase.js)：Firebase 初始化與即時資料存取
-- [src/components](src/components)：共用 UI 元件
-- [.github/workflows/deploy.yml](.github/workflows/deploy.yml)：GitHub Pages 自動部署流程
+- [src/App.jsx](src/App.jsx): main calendar UI and parser logic
+- [src/firebase.js](src/firebase.js): Firebase initialization and real-time data access
+- [src/components](src/components): shared UI components
+- [.github/workflows/deploy.yml](.github/workflows/deploy.yml): GitHub Pages deployment workflow
 
-## 技術堆疊
+## Tech Stack
 
 - React 18
 - Vite 5
@@ -95,6 +95,6 @@ npm run deploy
 - Firebase Realtime Database
 - Firebase Anonymous Authentication
 
-## 授權
+## License
 
 MIT

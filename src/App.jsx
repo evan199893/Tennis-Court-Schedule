@@ -89,6 +89,7 @@ const INITIAL_TEXT = `Happy Hour星空網球場A
 const STATUS_OPTIONS = ["已預約", "臨櫃已預約", "不同意"];
 const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 const STORAGE_KEY = "tennis-calendar-items-v1";
+const SOURCE_REPO_URL = "https://github.com/evan199893/Tennis-Court-Schedule";
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -641,6 +642,20 @@ export default function TennisCalendar() {
           </div>
         </div>
       </div>
+
+      <footer className="mx-auto mt-4 max-w-7xl pb-3">
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-sm backdrop-blur">
+          <span>Source:</span>
+          <a
+            href={SOURCE_REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-emerald-700 underline-offset-4 hover:text-emerald-800 hover:underline"
+          >
+            github.com/evan199893/Tennis-Court-Schedule
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
