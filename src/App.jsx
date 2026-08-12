@@ -199,8 +199,16 @@ function parseSchedule(text) {
   return Array.from(new Map(results.map((x) => [itemId(x), x])).values());
 }
 
-function statusStyle(status) {
+function isPastDate(dateString) {
+  if (!dateString) return false;
+  const today = new Date();
+  const todayKey = dateKey(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+  return dateString < todayKey;
+}
+
+function statusStyle(status, date = null) {
   if (status === "不同意") return "border-rose-200 bg-rose-50 text-rose-700";
+  if (date && isPastDate(date)) return "border-slate-200 bg-slate-100 text-slate-700";
   if (status === "臨櫃已預約") return "border-amber-200 bg-amber-50 text-amber-800";
   if (status === "已結案") return "border-slate-200 bg-slate-100 text-slate-700";
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -208,7 +216,7 @@ function statusStyle(status) {
 
 function EventPill({ item, onDelete, compact = false }) {
   return (
-    <div className={`group relative rounded-lg border px-2 py-1 ${statusStyle(item.status)} ${compact ? "text-xs" : ""}`}>
+    <div className={`group relative rounded-lg border px-2 py-1 ${statusStyle(item.status, item.date)} ${compact ? "text-xs" : ""}`}>
       <div className="flex items-center justify-between gap-1">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 font-semibold">
