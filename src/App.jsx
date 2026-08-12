@@ -241,12 +241,6 @@ export default function TennisCalendar() {
         // Listen to Firebase items with real-time updates
         unsubscribeItems = getItems((firebaseItems) => {
           setItems(firebaseItems);
-          if (firebaseItems.length) {
-            const newest = [...firebaseItems].sort((a, b) => b.date.localeCompare(a.date))[0];
-            const d = new Date(`${newest.date}T00:00:00`);
-            setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
-            setSelectedDate(newest.date);
-          }
           setLoaded(true);
         });
       } else {
