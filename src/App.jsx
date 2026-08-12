@@ -450,9 +450,9 @@ export default function TennisCalendar() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100">🎾</span>
-              家族預約行事曆
+              Tennis Schedule
             </div>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">家庭網球場預約行事曆</h1>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Lane86網球場預約行事曆</h1>
             <p className="mt-1 text-sm text-slate-500">
               {todayBookings.length > 0
                 ? `今天是 ${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日，今日有 ${todayBookings.length} 筆預約，時間為 ${todayBookingTimes.join("、")}。`
