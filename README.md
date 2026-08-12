@@ -1,6 +1,6 @@
-# Lane86 Tennis Court Booking Calendar
+# Tennis Schedule
 
-A React + Vite app for managing tennis court bookings at Lane86, with paste-and-parse scheduling, Firebase real-time syncing, and anonymous multi-user access.
+A React + Vite app for managing tennis court bookings, with paste-and-parse scheduling, Firebase real-time syncing, and anonymous multi-user access.
 
 ## Features
 
