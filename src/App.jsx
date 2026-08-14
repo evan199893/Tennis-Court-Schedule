@@ -628,7 +628,7 @@ export default function TennisCalendar() {
             <p className="mt-1 text-sm text-slate-500">
               {todayBookings.length > 0
                 ? `今天是 ${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日，今日有 ${todayBookings.length} 筆預約，時間為 ${todayBookingTimes.join("、")}。`
-                : `今天是 ${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日，資料會即時同步至 Firebase；若未設定 Firebase，則回退到此瀏覽器本機暫存。`}
+                : "今日沒有預約"}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 md:flex">
@@ -847,11 +847,6 @@ export default function TennisCalendar() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                  {usesAutoIcsFeed
-                    ? "Vercel 模式：這個網址會自動從 Firebase 讀取最新資料並輸出 .ics，不需要手動重建檔案。"
-                    : "免費模式：先按「匯出 .ics」下載檔案，將檔案覆蓋到 public/lane86-tennis.ics，再執行 npm run deploy。"}
-                </div>
                 <input
                   readOnly
                   value={icsHttpUrl}
