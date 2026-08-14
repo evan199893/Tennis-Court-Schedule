@@ -50,22 +50,18 @@ To make Firebase work in automated deployments, add the same Firebase variables 
 
 ## 6. Deploy the iCalendar subscription endpoint (.ics)
 
-GitHub Pages can host the frontend, but `.ics` subscription requires a dynamic endpoint that returns `text/calendar`. This repo provides that endpoint as a Firebase Function.
+Use the free manual export flow:
 
-```bash
-cd functions
-npm install
-cd ..
-npm run deploy:ics
-```
-
-Then set `VITE_ICS_FEED_URL` in `.env.local` to the deployed function URL and redeploy frontend:
+1. Open the app and go to `行事曆訂閱（.ics）`
+2. Click `匯出 .ics 檔案`
+3. Replace `public/lane86-tennis.ics` with the exported file
+4. Redeploy frontend:
 
 ```bash
 npm run deploy
 ```
 
-When users open the app, they can copy the subscription URL from the `行事曆訂閱（.ics）` card.
+Users can then copy the subscription URL directly from the same card.
 
 ## Troubleshooting
 

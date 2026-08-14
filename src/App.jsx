@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardPaste,
   Copy,
+  Download,
   ExternalLink,
   Link2,
   Smartphone,
@@ -95,7 +96,7 @@ const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "�
 const STORAGE_KEY = "tennis-calendar-items-v1";
 const SOURCE_REPO_URL = "https://github.com/evan199893/Tennis-Court-Schedule";
 const ALLOWED_PASSWORDS = ["1015", "1031", "1205"];
-const ICS_FEED_URL = import.meta.env.VITE_ICS_FEED_URL || "";
+const ICS_FILE_NAME = "lane86-tennis.ics";
 
 function requirePassword(actionLabel) {
   if (typeof window === "undefined") {
@@ -219,6 +220,90 @@ function statusStyle(status, date = null) {
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
 }
 
+function escapeIcsText(value = "") {
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
+}
+
+function toIcsLocalDateTime(dateString, timeString) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const [hour, minute] = timeString.split(":").map(Number);
+  return `${year}${pad(month)}${pad(day)}T${pad(hour)}${pad(minute)}00`;
+}
+
+function addMinutes(dateString, timeString, minutesToAdd) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const [hour, minute] = timeString.split(":").map(Number);
+  const dt = new Date(year, month - 1, day, hour, minute, 0, 0);
+  dt.setMinutes(dt.getMinutes() + minutesToAdd);
+  return {
+    date: `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`,
+    time: `${pad(dt.getHours())}:${pad(dt.getMinutes())}`,
+  };
+}
+
+function utcStamp() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(
+    now.getUTCMinutes()
+  )}${pad(now.getUTCSeconds())}Z`;
+}
+
+function buildIcsFromItems(items) {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Lane86//Tennis Court Schedule//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:Lane86 Tennis Court Schedule",
+    "X-WR-TIMEZONE:Asia/Taipei",
+    "REFRESH-INTERVAL;VALUE=DURATION:PT3H",
+    "X-PUBLISHED-TTL:PT3H",
+  ];
+
+  items
+    .filter((item) => item && item.status !== "不同意")
+    .sort((a, b) => {
+      const aDate = String(a?.date || "");
+      const bDate = String(b?.date || "");
+      return aDate.localeCompare(bDate);
+    })
+    .forEach((item) => {
+      const date = String(item.date || "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+
+      const court = String(item.court || "未指定").trim();
+      const status = String(item.status || "已預約").trim();
+      const source = String(item.source || "Web").trim();
+      const uniqueTimes = [...new Set((item.times || []).map((x) => String(x).trim()).filter((x) => /^\d{2}:\d{2}$/.test(x)))].sort();
+
+      uniqueTimes.forEach((time, index) => {
+        const end = addMinutes(date, time, 60);
+        const uidBase = item.id || `${date}-${court}-${status}`;
+        const uid = `${uidBase}-${index}@lane86-tennis`;
+        const summary = `Lane86 Tennis Court ${court} (${status})`;
+        const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}`;
+
+        lines.push("BEGIN:VEVENT");
+        lines.push(`UID:${escapeIcsText(uid)}`);
+        lines.push(`DTSTAMP:${utcStamp()}`);
+        lines.push(`DTSTART;TZID=Asia/Taipei:${toIcsLocalDateTime(date, time)}`);
+        lines.push(`DTEND;TZID=Asia/Taipei:${toIcsLocalDateTime(end.date, end.time)}`);
+        lines.push(`SUMMARY:${escapeIcsText(summary)}`);
+        lines.push(`DESCRIPTION:${escapeIcsText(description)}`);
+        lines.push("LOCATION:Lane86 Tennis Court");
+        lines.push("END:VEVENT");
+      });
+    });
+
+  lines.push("END:VCALENDAR", "");
+  return lines.join("\r\n");
+}
+
 function EventPill({ item, onDelete, compact = false }) {
   return (
     <div className={`group relative rounded-lg border px-2 py-1 ${statusStyle(item.status, item.date)} ${compact ? "text-xs" : ""}`}>
@@ -266,12 +351,10 @@ export default function TennisCalendar() {
   const [user, setUser] = useState(null);
 
   const icsHttpUrl = useMemo(() => {
-    const raw = ICS_FEED_URL.trim();
-    if (!raw) return "";
-    if (raw.startsWith("webcal://")) {
-      return `https://${raw.slice("webcal://".length)}`;
-    }
-    return raw;
+    if (typeof window === "undefined") return "";
+    const base = import.meta.env.BASE_URL || "/";
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return `${window.location.origin}${normalizedBase}${ICS_FILE_NAME}`;
   }, []);
 
   const icsWebcalUrl = useMemo(() => {
@@ -488,7 +571,7 @@ export default function TennisCalendar() {
   async function copySubscribeUrl(kind = "https") {
     const value = kind === "webcal" ? icsWebcalUrl : icsHttpUrl;
     if (!value) {
-      setSubscribeMessage("尚未設定訂閱網址。請先設定 VITE_ICS_FEED_URL。");
+      setSubscribeMessage("尚未產生可用的訂閱網址。請稍後重試。");
       return;
     }
 
@@ -498,6 +581,21 @@ export default function TennisCalendar() {
     } catch {
       setSubscribeMessage("無法自動複製，請手動複製下方連結。");
     }
+  }
+
+  function exportIcsFile() {
+    const icsText = buildIcsFromItems(items);
+    const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = ICS_FILE_NAME;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setSubscribeMessage("已匯出 lane86-tennis.ics。請覆蓋到 public/lane86-tennis.ics 後重新部署。");
   }
 
   return (
@@ -703,14 +801,17 @@ export default function TennisCalendar() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                  請把這個 URL 加到 iOS / Android 的「新增訂閱行事曆（From URL）」；手機行事曆會定期抓取最新資料。
+                  免費模式：先按「匯出 .ics」下載檔案，將檔案覆蓋到 public/lane86-tennis.ics，再執行 npm run deploy。
                 </div>
                 <input
                   readOnly
                   value={icsHttpUrl}
-                  placeholder="先設定 VITE_ICS_FEED_URL，例如 https://<region>-<project>.cloudfunctions.net/calendarIcs"
+                  placeholder="部署後這裡會是可訂閱網址"
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-300"
                 />
+                <Button onClick={exportIcsFile} className="w-full rounded-xl bg-sky-600 hover:bg-sky-700">
+                  <Download className="mr-2 h-4 w-4" />匯出 .ics 檔案
+                </Button>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <Button variant="outline" className="rounded-xl" onClick={() => copySubscribeUrl("https")}>
                     <Copy className="mr-2 h-4 w-4" />複製 HTTPS
@@ -728,7 +829,7 @@ export default function TennisCalendar() {
                   }`}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  開啟 .ics 連結測試
+                  開啟目前部署的 .ics
                 </a>
                 {subscribeMessage ? <p className="text-xs text-sky-700">{subscribeMessage}</p> : null}
               </CardContent>

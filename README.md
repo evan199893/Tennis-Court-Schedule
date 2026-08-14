@@ -57,32 +57,19 @@ See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for the full setup instructions.
 
 ## iOS / Android Calendar Subscription (.ics)
 
-This project can publish a live iCalendar feed so phone calendar apps can subscribe and auto-refresh bookings.
+This project supports a fully free workflow with no backend cost.
 
-1. Deploy the Firebase Function endpoint:
+1. In the app, open `行事曆訂閱（.ics）` and click `匯出 .ics 檔案`
+2. Replace `public/lane86-tennis.ics` with the exported file
+3. Deploy again:
   ```bash
-  cd functions
-  npm install
-  cd ..
-  npm run deploy:ics
-  ```
-
-2. Copy the deployed URL (example):
-  ```text
-  https://asia-east1-your-project-id.cloudfunctions.net/calendarIcs
-  ```
-
-3. Set it in `.env.local` and redeploy frontend:
-  ```bash
-  VITE_ICS_FEED_URL=https://asia-east1-your-project-id.cloudfunctions.net/calendarIcs
   npm run deploy
   ```
+4. Use the app's displayed URL for calendar subscription:
+  - iOS: subscribe with `webcal://...`
+  - Android / Google Calendar: subscribe with `https://...`
 
-4. In the app, open the new `行事曆訂閱（.ics）` card and copy the subscription URL:
-  - iOS: use the `webcal://` URL in Calendar subscription
-  - Android/Google Calendar: use the `https://` URL in "From URL"
-
-Calendar apps pull updates on their own schedule (often every few hours), not instantly.
+When bookings change, repeat the export-and-deploy steps to publish updates.
 
 ## GitHub Pages Deployment
 
