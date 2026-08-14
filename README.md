@@ -61,13 +61,40 @@ This project now supports two free workflows:
 
 ### Option A: Vercel auto-update
 
-Deploy this repo to Vercel and set one environment variable:
+Deploy this repo to Vercel and set the database URL as an environment variable.
+Recommended variable name:
+
+```bash
+FIREBASE_DATABASE_URL=https://lane87-tennis-default-rtdb.firebaseio.com
+```
+
+Compatible fallback variable name:
 
 ```bash
 VITE_FIREBASE_DATABASE_URL=https://lane87-tennis-default-rtdb.firebaseio.com
 ```
 
 The app will automatically use `/api/calendar.ics` as a live subscription URL.
+
+How it works:
+- `api/calendar.ics` reads booking data from Firebase Realtime Database on each request
+- Returns a valid `text/calendar` feed for iOS / Google Calendar subscriptions
+- Response cache header is `Cache-Control: public, max-age=300` (up to 5 minutes on CDN)
+
+Update behavior:
+- Server side: new Firebase data is reflected on the next feed request (typically within minutes because of cache)
+- Calendar app side: iOS / Google Calendar refresh on their own polling schedule, so updates are not always instant
+
+Quick verification after deploy:
+```bash
+curl -I https://<your-vercel-domain>/api/calendar.ics
+curl https://<your-vercel-domain>/api/calendar.ics | head
+```
+
+Expected result:
+- HTTP `200`
+- `Content-Type: text/calendar`
+- Body starts with `BEGIN:VCALENDAR`
 
 ### Option B: GitHub Pages manual publish
 
