@@ -83,15 +83,25 @@ For GitHub Actions deployments, add the same Firebase variables as GitHub reposi
 
 ## 8. Enable `.ics` subscription feed (for iOS / Android calendars)
 
-This project supports a free manual publish mode with no function deployment.
+This project supports two free options.
 
-### 8.1 Export and publish `.ics`
+### 8.1 Vercel auto-update mode
+
+Deploy the repo to Vercel and add this environment variable:
+
+```bash
+VITE_FIREBASE_DATABASE_URL=https://lane87-tennis-default-rtdb.firebaseio.com
+```
+
+The Vercel API route `/api/calendar.ics` will read Firebase Realtime Database directly and return a live subscription feed.
+
+### 8.2 Export and publish `.ics`
 
 1. In the app, click `匯出 .ics 檔案`
 2. Replace `public/lane86-tennis.ics` with the downloaded file
 3. Redeploy with `npm run deploy`
 
-### 8.2 Calendar app usage
+### 8.3 Calendar app usage
 
 - iOS Calendar: subscribe using the `webcal://...` URL shown in app
 - Android / Google Calendar: subscribe using the `https://...` URL shown in app

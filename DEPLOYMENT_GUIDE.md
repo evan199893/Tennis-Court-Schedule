@@ -50,6 +50,21 @@ To make Firebase work in automated deployments, add the same Firebase variables 
 
 ## 6. Deploy the iCalendar subscription endpoint (.ics)
 
+### Recommended: Vercel free auto-update mode
+
+1. Import this repository into Vercel
+2. Add environment variable:
+
+```bash
+VITE_FIREBASE_DATABASE_URL=https://lane87-tennis-default-rtdb.firebaseio.com
+```
+
+3. Deploy
+
+The app will expose a live `.ics` URL at `/api/calendar.ics` on your Vercel domain.
+
+### Fallback: GitHub Pages manual export mode
+
 Use the free manual export flow:
 
 1. Open the app and go to `行事曆訂閱（.ics）`

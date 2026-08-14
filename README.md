@@ -57,19 +57,34 @@ See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for the full setup instructions.
 
 ## iOS / Android Calendar Subscription (.ics)
 
-This project supports a fully free workflow with no backend cost.
+This project now supports two free workflows:
+
+### Option A: Vercel auto-update
+
+Deploy this repo to Vercel and set one environment variable:
+
+```bash
+VITE_FIREBASE_DATABASE_URL=https://lane87-tennis-default-rtdb.firebaseio.com
+```
+
+The app will automatically use `/api/calendar.ics` as a live subscription URL.
+
+### Option B: GitHub Pages manual publish
 
 1. In the app, open `行事曆訂閱（.ics）` and click `匯出 .ics 檔案`
 2. Replace `public/lane86-tennis.ics` with the exported file
 3. Deploy again:
+
   ```bash
   npm run deploy
   ```
-4. Use the app's displayed URL for calendar subscription:
-  - iOS: subscribe with `webcal://...`
-  - Android / Google Calendar: subscribe with `https://...`
 
-When bookings change, repeat the export-and-deploy steps to publish updates.
+4. Use the app's displayed URL for calendar subscription:
+
+- iOS: subscribe with `webcal://...`
+- Android / Google Calendar: subscribe with `https://...`
+
+If you use GitHub Pages, repeat the export-and-deploy steps when bookings change.
 
 ## GitHub Pages Deployment
 

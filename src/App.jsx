@@ -97,6 +97,7 @@ const STORAGE_KEY = "tennis-calendar-items-v1";
 const SOURCE_REPO_URL = "https://github.com/evan199893/Tennis-Court-Schedule";
 const ALLOWED_PASSWORDS = ["1015", "1031", "1205"];
 const ICS_FILE_NAME = "lane86-tennis.ics";
+const AUTO_ICS_FEED_URL = import.meta.env.VITE_ICS_FEED_URL || "";
 
 function requirePassword(actionLabel) {
   if (typeof window === "undefined") {
@@ -352,6 +353,21 @@ export default function TennisCalendar() {
 
   const icsHttpUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
+    if (AUTO_ICS_FEED_URL.trim()) {
+      const raw = AUTO_ICS_FEED_URL.trim();
+      if (raw.startsWith("webcal://")) {
+        return `https://${raw.slice("webcal://".length)}`;
+      }
+      if (/^https?:\/\//.test(raw)) {
+        return raw;
+      }
+      return new URL(raw, window.location.origin).toString();
+    }
+
+    if (window.location.hostname.endsWith("vercel.app")) {
+      return `${window.location.origin}/api/calendar.ics`;
+    }
+
     const base = import.meta.env.BASE_URL || "/";
     const normalizedBase = base.endsWith("/") ? base : `${base}/`;
     return `${window.location.origin}${normalizedBase}${ICS_FILE_NAME}`;
@@ -361,6 +377,8 @@ export default function TennisCalendar() {
     if (!icsHttpUrl) return "";
     return icsHttpUrl.replace(/^https?:\/\//, "webcal://");
   }, [icsHttpUrl]);
+
+  const usesAutoIcsFeed = useMemo(() => icsHttpUrl.includes("/api/calendar.ics") || Boolean(AUTO_ICS_FEED_URL.trim()), [icsHttpUrl]);
 
   // Initialize Firebase authentication and real-time sync
   useEffect(() => {
@@ -595,7 +613,7 @@ export default function TennisCalendar() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    setSubscribeMessage("已匯出 lane86-tennis.ics。請覆蓋到 public/lane86-tennis.ics 後重新部署。");
+    setSubscribeMessage("已匯出 lane86-tennis.ics。若使用 GitHub Pages，請覆蓋到 public/lane86-tennis.ics 後重新部署。");
   }
 
   return (
@@ -801,7 +819,9 @@ export default function TennisCalendar() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                  免費模式：先按「匯出 .ics」下載檔案，將檔案覆蓋到 public/lane86-tennis.ics，再執行 npm run deploy。
+                  {usesAutoIcsFeed
+                    ? "Vercel 模式：這個網址會自動從 Firebase 讀取最新資料並輸出 .ics，不需要手動重建檔案。"
+                    : "免費模式：先按「匯出 .ics」下載檔案，將檔案覆蓋到 public/lane86-tennis.ics，再執行 npm run deploy。"}
                 </div>
                 <input
                   readOnly
@@ -809,9 +829,11 @@ export default function TennisCalendar() {
                   placeholder="部署後這裡會是可訂閱網址"
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-300"
                 />
-                <Button onClick={exportIcsFile} className="w-full rounded-xl bg-sky-600 hover:bg-sky-700">
-                  <Download className="mr-2 h-4 w-4" />匯出 .ics 檔案
-                </Button>
+                {!usesAutoIcsFeed ? (
+                  <Button onClick={exportIcsFile} className="w-full rounded-xl bg-sky-600 hover:bg-sky-700">
+                    <Download className="mr-2 h-4 w-4" />匯出 .ics 檔案
+                  </Button>
+                ) : null}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <Button variant="outline" className="rounded-xl" onClick={() => copySubscribeUrl("https")}>
                     <Copy className="mr-2 h-4 w-4" />複製 HTTPS
@@ -829,7 +851,7 @@ export default function TennisCalendar() {
                   }`}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  開啟目前部署的 .ics
+                  {usesAutoIcsFeed ? "開啟自動更新 .ics" : "開啟目前部署的 .ics"}
                 </a>
                 {subscribeMessage ? <p className="text-xs text-sky-700">{subscribeMessage}</p> : null}
               </CardContent>
