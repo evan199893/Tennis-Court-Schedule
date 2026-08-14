@@ -48,6 +48,25 @@ The workflow at [.github/workflows/deploy.yml](.github/workflows/deploy.yml) wil
 
 To make Firebase work in automated deployments, add the same Firebase variables as GitHub repository Secrets or Variables.
 
+## 6. Deploy the iCalendar subscription endpoint (.ics)
+
+GitHub Pages can host the frontend, but `.ics` subscription requires a dynamic endpoint that returns `text/calendar`. This repo provides that endpoint as a Firebase Function.
+
+```bash
+cd functions
+npm install
+cd ..
+npm run deploy:ics
+```
+
+Then set `VITE_ICS_FEED_URL` in `.env.local` to the deployed function URL and redeploy frontend:
+
+```bash
+npm run deploy
+```
+
+When users open the app, they can copy the subscription URL from the `行事曆訂閱（.ics）` card.
+
 ## Troubleshooting
 
 ### 404 page

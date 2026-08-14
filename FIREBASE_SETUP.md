@@ -81,6 +81,51 @@ npm run deploy
 
 For GitHub Actions deployments, add the same Firebase variables as GitHub repository Secrets or Variables.
 
+## 8. Enable `.ics` subscription feed (for iOS / Android calendars)
+
+This repo includes a Firebase Cloud Function at `functions/index.js` that exposes:
+
+- `calendarIcs`: returns `text/calendar` from realtime bookings data
+
+### 8.1 Install Firebase CLI
+
+```bash
+npm install -g firebase-tools
+firebase login
+```
+
+### 8.2 Install function dependencies and deploy
+
+```bash
+cd functions
+npm install
+cd ..
+npm run deploy:ics
+```
+
+After deploy, Firebase prints a URL like:
+
+```text
+https://asia-east1-your-project-id.cloudfunctions.net/calendarIcs
+```
+
+### 8.3 Add feed URL to frontend env
+
+In `.env.local` add:
+
+```bash
+VITE_ICS_FEED_URL=https://asia-east1-your-project-id.cloudfunctions.net/calendarIcs
+```
+
+Rebuild or redeploy frontend after changing env vars.
+
+### 8.4 Calendar app usage
+
+- iOS Calendar: subscribe using the `webcal://...` URL shown in app
+- Android / Google Calendar: subscribe using the `https://...` URL shown in app
+
+Phone calendars sync by polling and may take some time to reflect updates.
+
 ## Production rules suggestion
 
 For real-world use, tighten the database rules so only authorized users can read or write. A simple test-only rule is:

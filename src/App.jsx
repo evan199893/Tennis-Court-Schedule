@@ -5,6 +5,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardPaste,
+  Copy,
+  ExternalLink,
+  Link2,
+  Smartphone,
   Plus,
   Trash2,
   X,
@@ -91,6 +95,7 @@ const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "�
 const STORAGE_KEY = "tennis-calendar-items-v1";
 const SOURCE_REPO_URL = "https://github.com/evan199893/Tennis-Court-Schedule";
 const ALLOWED_PASSWORDS = ["1015", "1031", "1205"];
+const ICS_FEED_URL = import.meta.env.VITE_ICS_FEED_URL || "";
 
 function requirePassword(actionLabel) {
   if (typeof window === "undefined") {
@@ -255,9 +260,24 @@ export default function TennisCalendar() {
   const [items, setItems] = useState([]);
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
+  const [subscribeMessage, setSubscribeMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [loaded, setLoaded] = useState(false);
   const [user, setUser] = useState(null);
+
+  const icsHttpUrl = useMemo(() => {
+    const raw = ICS_FEED_URL.trim();
+    if (!raw) return "";
+    if (raw.startsWith("webcal://")) {
+      return `https://${raw.slice("webcal://".length)}`;
+    }
+    return raw;
+  }, []);
+
+  const icsWebcalUrl = useMemo(() => {
+    if (!icsHttpUrl) return "";
+    return icsHttpUrl.replace(/^https?:\/\//, "webcal://");
+  }, [icsHttpUrl]);
 
   // Initialize Firebase authentication and real-time sync
   useEffect(() => {
@@ -465,6 +485,21 @@ export default function TennisCalendar() {
   const todayBookings = (itemsByDate[todayKey] || []).filter((x) => x.status !== "不同意");
   const todayBookingTimes = [...new Set(todayBookings.flatMap((item) => item.times))].sort();
 
+  async function copySubscribeUrl(kind = "https") {
+    const value = kind === "webcal" ? icsWebcalUrl : icsHttpUrl;
+    if (!value) {
+      setSubscribeMessage("尚未設定訂閱網址。請先設定 VITE_ICS_FEED_URL。");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      setSubscribeMessage(`已複製 ${kind === "webcal" ? "webcal" : "https"} 訂閱連結。`);
+    } catch {
+      setSubscribeMessage("無法自動複製，請手動複製下方連結。");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/40 to-sky-50 p-3 text-slate-800 md:p-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -656,6 +691,46 @@ export default function TennisCalendar() {
                 <p className="text-xs leading-5 text-slate-500">
                   可一次貼上多筆。系統會辨識 A／B 場、預約狀態、日期與多個時段，並略過完全相同的重複紀錄。
                 </p>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border-white/80 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Link2 className="h-5 w-5 text-sky-600" />
+                  行事曆訂閱（.ics）
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                  請把這個 URL 加到 iOS / Android 的「新增訂閱行事曆（From URL）」；手機行事曆會定期抓取最新資料。
+                </div>
+                <input
+                  readOnly
+                  value={icsHttpUrl}
+                  placeholder="先設定 VITE_ICS_FEED_URL，例如 https://<region>-<project>.cloudfunctions.net/calendarIcs"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-300"
+                />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <Button variant="outline" className="rounded-xl" onClick={() => copySubscribeUrl("https")}>
+                    <Copy className="mr-2 h-4 w-4" />複製 HTTPS
+                  </Button>
+                  <Button variant="outline" className="rounded-xl" onClick={() => copySubscribeUrl("webcal")}>
+                    <Smartphone className="mr-2 h-4 w-4" />複製 iOS (webcal)
+                  </Button>
+                </div>
+                <a
+                  href={icsHttpUrl || undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-2 text-xs font-medium ${
+                    icsHttpUrl ? "text-sky-700 hover:text-sky-800" : "pointer-events-none text-slate-400"
+                  }`}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  開啟 .ics 連結測試
+                </a>
+                {subscribeMessage ? <p className="text-xs text-sky-700">{subscribeMessage}</p> : null}
               </CardContent>
             </Card>
 

@@ -11,6 +11,7 @@ A React + Vite app for managing tennis court bookings, with paste-and-parse sche
 - 📋 Bulk booking import from pasted text
 - 🗑️ Delete bookings directly from the calendar or details panel
 - 📱 Responsive layout for desktop and mobile
+- 🔔 iCalendar (.ics) subscription feed for iOS and Android calendars
 
 ## Quick Start
 
@@ -53,6 +54,35 @@ Example test rules:
 ```
 
 See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for the full setup instructions.
+
+## iOS / Android Calendar Subscription (.ics)
+
+This project can publish a live iCalendar feed so phone calendar apps can subscribe and auto-refresh bookings.
+
+1. Deploy the Firebase Function endpoint:
+  ```bash
+  cd functions
+  npm install
+  cd ..
+  npm run deploy:ics
+  ```
+
+2. Copy the deployed URL (example):
+  ```text
+  https://asia-east1-your-project-id.cloudfunctions.net/calendarIcs
+  ```
+
+3. Set it in `.env.local` and redeploy frontend:
+  ```bash
+  VITE_ICS_FEED_URL=https://asia-east1-your-project-id.cloudfunctions.net/calendarIcs
+  npm run deploy
+  ```
+
+4. In the app, open the new `行事曆訂閱（.ics）` card and copy the subscription URL:
+  - iOS: use the `webcal://` URL in Calendar subscription
+  - Android/Google Calendar: use the `https://` URL in "From URL"
+
+Calendar apps pull updates on their own schedule (often every few hours), not instantly.
 
 ## GitHub Pages Deployment
 

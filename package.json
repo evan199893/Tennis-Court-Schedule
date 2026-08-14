@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "deploy:ics": "npx firebase-tools deploy --only functions:calendarIcs"
   },
   "dependencies": {
     "firebase": "^12.17.1",
