@@ -7,7 +7,6 @@ import {
   ClipboardPaste,
   Copy,
   Download,
-  ExternalLink,
   Link2,
   Smartphone,
   Plus,
@@ -771,6 +770,36 @@ export default function TennisCalendar() {
           <div className="space-y-4">
             <Card className="rounded-3xl border-white/80 shadow-sm">
               <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>{selectedDate} 詳細內容</span>
+                  <Badge variant="secondary">{selectedItems.length} 筆</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedItems.length ? (
+                  <div className="space-y-2">
+                    {selectedItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <EventPill item={item} onDelete={removeItem} />
+                        </div>
+                        <Button variant="ghost" size="icon" className="shrink-0 rounded-xl text-slate-400 hover:text-rose-600" onClick={() => removeItem(item.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-slate-400">
+                    <MapPin className="mx-auto mb-2 h-6 w-6" />
+                    這一天目前沒有預約
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border-white/80 shadow-sm">
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ClipboardPaste className="h-5 w-5 text-emerald-600" />
                   新增預約
@@ -842,48 +871,7 @@ export default function TennisCalendar() {
                     <Smartphone className="mr-2 h-4 w-4" />複製 iOS (webcal)
                   </Button>
                 </div>
-                <a
-                  href={icsHttpUrl || undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`inline-flex items-center gap-2 text-xs font-medium ${
-                    icsHttpUrl ? "text-sky-700 hover:text-sky-800" : "pointer-events-none text-slate-400"
-                  }`}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  {usesAutoIcsFeed ? "開啟自動更新 .ics" : "開啟目前部署的 .ics"}
-                </a>
                 {subscribeMessage ? <p className="text-xs text-sky-700">{subscribeMessage}</p> : null}
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-3xl border-white/80 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center justify-between text-lg">
-                  <span>{selectedDate} 詳細內容</span>
-                  <Badge variant="secondary">{selectedItems.length} 筆</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedItems.length ? (
-                  <div className="space-y-2">
-                    {selectedItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        <div className="min-w-0 flex-1">
-                          <EventPill item={item} onDelete={removeItem} />
-                        </div>
-                        <Button variant="ghost" size="icon" className="shrink-0 rounded-xl text-slate-400 hover:text-rose-600" onClick={() => removeItem(item.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-slate-400">
-                    <MapPin className="mx-auto mb-2 h-6 w-6" />
-                    這一天目前沒有預約
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
