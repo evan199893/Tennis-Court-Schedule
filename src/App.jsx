@@ -17,6 +17,7 @@ import {
   Clock3,
   MapPin,
   StickyNote,
+  Umbrella,
 } from "lucide-react";
 import { Button } from "./components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/Card";
@@ -221,6 +222,13 @@ function statusStyle(status, date = null) {
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
 }
 
+function pillStyle(item) {
+  if (item.note && item.note.trim()) {
+    return "border-purple-200 bg-purple-50 text-purple-700";
+  }
+  return statusStyle(item.status, item.date);
+}
+
 function escapeIcsText(value = "") {
   return String(value)
     .replace(/\\/g, "\\\\")
@@ -308,7 +316,7 @@ function buildIcsFromItems(items) {
 
 function EventPill({ item, onDelete, compact = false }) {
   return (
-    <div className={`group relative rounded-lg border px-2 py-1 ${statusStyle(item.status, item.date)} ${compact ? "text-xs" : ""}`}>
+    <div className={`group relative rounded-lg border px-2 py-1 ${pillStyle(item)} ${compact ? "text-xs" : ""}`}>
       <div className="flex items-center justify-between gap-1">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 font-semibold">
@@ -782,6 +790,14 @@ export default function TennisCalendar() {
                         {isToday && (
                           <span className="rounded bg-emerald-600 px-1 py-0.5 text-[10px] font-bold leading-none text-white">
                             今天
+                          </span>
+                        )}
+                        {dayItems.some((item) => /rain/i.test(item.note || "")) && (
+                          <span
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-sky-600"
+                            title="備註提到下雨"
+                          >
+                            <Umbrella className="h-3 w-3" />
                           </span>
                         )}
                       </div>
