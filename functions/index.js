@@ -67,6 +67,7 @@ function toEventLines(itemKey, item) {
   const court = String(item.court || "未指定").trim();
   const status = String(item.status || "已預約").trim();
   const source = String(item.source || "Firebase").trim();
+  const note = String(item.note || "").trim();
   const times = Array.isArray(item.times)
     ? item.times
         .map((x) => String(x).trim())
@@ -83,7 +84,7 @@ function toEventLines(itemKey, item) {
     const end = addMinutes(date, time, SLOT_MINUTES);
     const uid = `${itemKey}-${index}@lane86-tennis`;
     const summary = `Lane86 Tennis Court ${court} (${status})`;
-    const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}`;
+    const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}${note ? `\\nNote: ${note}` : ""}`;
 
     const lines = [
       "BEGIN:VEVENT",

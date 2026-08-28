@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue, set, remove, push } from 'firebase/database';
+import { getDatabase, ref, onValue, set, update, remove, push } from 'firebase/database';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
 // Client web config (safe to ship); override via VITE_* in .env.local if needed.
@@ -56,6 +56,12 @@ export const addItem = (item) => {
 export const removeItemFromFirebase = (itemId) => {
   const itemRef = ref(database, `items/${itemId}`);
   return remove(itemRef);
+};
+
+// Update the note field on a single item
+export const updateItemNote = (itemId, note) => {
+  const itemRef = ref(database, `items/${itemId}`);
+  return update(itemRef, { note });
 };
 
 // Update all items (for bulk operations)

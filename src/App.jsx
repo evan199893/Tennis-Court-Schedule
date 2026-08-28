@@ -16,12 +16,13 @@ import {
   AlertCircle,
   Clock3,
   MapPin,
+  StickyNote,
 } from "lucide-react";
 import { Button } from "./components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/Card";
 import { Textarea } from "./components/Textarea";
 import { Badge } from "./components/Badge";
-import { initializeAuth, onAuthChange, getItems, addItem, removeItemFromFirebase, database } from "./firebase";
+import { initializeAuth, onAuthChange, getItems, addItem, removeItemFromFirebase, updateItemNote, database } from "./firebase";
 
 const INITIAL_TEXT = `Happy Hour星空網球場A
 已預約
@@ -279,6 +280,7 @@ function buildIcsFromItems(items) {
       const court = String(item.court || "未指定").trim();
       const status = String(item.status || "已預約").trim();
       const source = String(item.source || "Web").trim();
+      const note = String(item.note || "").trim();
       const uniqueTimes = [...new Set((item.times || []).map((x) => String(x).trim()).filter((x) => /^\d{2}:\d{2}$/.test(x)))].sort();
 
       uniqueTimes.forEach((time, index) => {
@@ -286,7 +288,7 @@ function buildIcsFromItems(items) {
         const uidBase = item.id || `${date}-${court}-${status}`;
         const uid = `${uidBase}-${index}@lane86-tennis`;
         const summary = `Lane86 Tennis Court ${court} (${status})`;
-        const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}`;
+        const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}${note ? `\\nNote: ${note}` : ""}`;
 
         lines.push("BEGIN:VEVENT");
         lines.push(`UID:${escapeIcsText(uid)}`);
@@ -317,6 +319,12 @@ function EventPill({ item, onDelete, compact = false }) {
             <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-medium">
               <Clock3 className="h-3 w-3" />
               {item.times.join("、")}
+            </div>
+          )}
+          {!compact && item.note && (
+            <div className="mt-1 flex items-start gap-1 text-[11px] text-slate-600">
+              <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+              <span className="break-words">{item.note}</span>
             </div>
           )}
           {compact && <div className="text-[10px] font-medium">{item.times.join("、")}</div>}
@@ -571,6 +579,35 @@ export default function TennisCalendar() {
       });
   }
 
+  async function editNote(item) {
+    if (!requirePassword("add or edit a note")) {
+      setMessage("Access denied. Invalid password.");
+      return;
+    }
+
+    const entered = window.prompt("輸入備註內容（留空並確定可清除備註）：", item.note || "");
+    if (entered === null) {
+      return;
+    }
+    const note = entered.trim();
+
+    if (!database || !user) {
+      setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, note } : x)));
+      setMessage(note ? "已更新備註（本機暫存）。" : "已清除備註（本機暫存）。");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
+
+    try {
+      await updateItemNote(item.id, note);
+      setMessage(note ? "已更新備註。" : "已清除備註。");
+      setTimeout(() => setMessage(""), 2000);
+    } catch (error) {
+      console.error("Error updating note:", error);
+      setMessage("更新備註時出錯，請稍後再試。");
+    }
+  }
+
   function changeMonth(delta) {
     setMonth((m) => new Date(m.getFullYear(), m.getMonth() + delta, 1));
   }
@@ -783,6 +820,9 @@ export default function TennisCalendar() {
                         <div className="min-w-0 flex-1">
                           <EventPill item={item} onDelete={removeItem} />
                         </div>
+                        <Button variant="ghost" size="icon" className="shrink-0 rounded-xl text-slate-400 hover:text-sky-600" onClick={() => editNote(item)}>
+                          <StickyNote className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="shrink-0 rounded-xl text-slate-400 hover:text-rose-600" onClick={() => removeItem(item.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>

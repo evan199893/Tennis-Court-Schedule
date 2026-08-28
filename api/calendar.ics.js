@@ -58,13 +58,14 @@ function buildCalendar(itemsMap = {}) {
       const court = String(item.court || "未指定").trim();
       const status = String(item.status || "已預約").trim();
       const source = String(item.source || "Firebase").trim();
+      const note = String(item.note || "").trim();
       const uniqueTimes = [...new Set((item.times || []).map((x) => String(x).trim()).filter((x) => /^\d{2}:\d{2}$/.test(x)))].sort();
 
       uniqueTimes.forEach((time, index) => {
         const end = addMinutes(date, time, 60);
         const uid = `${key}-${index}@lane86-tennis`;
         const summary = `Lane86 Tennis Court ${court} (${status})`;
-        const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}`;
+        const description = `${source}\\nCourt: ${court}\\nStatus: ${status}\\nTime: ${date} ${time}${note ? `\\nNote: ${note}` : ""}`;
 
         lines.push("BEGIN:VEVENT");
         lines.push(`UID:${escapeIcsText(uid)}`);
