@@ -1091,6 +1091,8 @@ export default function TennisCalendar() {
                   >
                     <option value="A">A</option>
                     <option value="B">B</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
                   </select>
                 </div>
                 <div>
@@ -1167,6 +1169,8 @@ export default function TennisCalendar() {
                   >
                     <option value="A">A</option>
                     <option value="B">B</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
                   </select>
                 </div>
                 <div>
