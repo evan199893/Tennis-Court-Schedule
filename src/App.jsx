@@ -855,7 +855,7 @@ export default function TennisCalendar() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-slate-500">
-                球場 A、B：星空球場　球場 1、2：竹北國民運動中心
+                球場 A、B：星空球場　球場 1、2：竹北星空球場
               </p>
             </CardHeader>
             <CardContent className="p-0">
