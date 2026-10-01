@@ -376,6 +376,7 @@ export default function TennisCalendar() {
   const [loaded, setLoaded] = useState(false);
   const [user, setUser] = useState(null);
   const [editForm, setEditForm] = useState(null);
+  const [addForm, setAddForm] = useState(null);
 
   const icsHttpUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -572,6 +573,68 @@ export default function TennisCalendar() {
         ? `已加入 ${fresh.length} 筆預約${parsed.length > fresh.length ? `，略過 ${parsed.length - fresh.length} 筆重複資料` : ""}。`
         : "這些資料已存在，未重複加入。"
     );
+  }
+
+  function openAddForm() {
+    if (!requirePassword("add a booking")) {
+      setMessage("Access denied. Invalid password.");
+      return;
+    }
+
+    setAddForm({ court: "A", status: "已預約", date: selectedDate || todayKey, times: "", note: "" });
+  }
+
+  function cancelAddForm() {
+    setAddForm(null);
+  }
+
+  async function saveAddForm() {
+    if (!addForm) return;
+
+    const date = addForm.date.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      setMessage("日期格式錯誤，請使用 YYYY-MM-DD。");
+      return;
+    }
+
+    const times = [...new Set(addForm.times.split(/[,，、\s]+/).map(normalizeTime).filter(Boolean))].sort();
+    if (!times.length) {
+      setMessage("請輸入至少一個有效時段，例如 18:00。");
+      return;
+    }
+
+    const note = addForm.note.trim();
+    const newItem = { date, court: addForm.court, status: addForm.status, times, note, source: "手動新增" };
+
+    const existingKeys = new Set(items.map(itemId));
+    if (existingKeys.has(itemId(newItem))) {
+      setMessage("這筆資料已存在，未重複加入。");
+      return;
+    }
+
+    if (!database || !user) {
+      setItems((prev) => [...prev, { ...newItem, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }]);
+      setAddForm(null);
+      const d = new Date(`${date}T00:00:00`);
+      setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+      setSelectedDate(date);
+      setMessage("已加入 1 筆預約（本機暫存）。");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
+
+    try {
+      await addItem(newItem);
+      setAddForm(null);
+      const d = new Date(`${date}T00:00:00`);
+      setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+      setSelectedDate(date);
+      setMessage("已加入 1 筆預約。");
+      setTimeout(() => setMessage(""), 2000);
+    } catch (error) {
+      console.error("Error adding item to Firebase:", error);
+      setMessage("新增預約時出錯，請稍後再試。");
+    }
   }
 
   function removeItem(id) {
@@ -945,6 +1008,9 @@ export default function TennisCalendar() {
                 <Button onClick={addParsed} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700">
                   <Plus className="mr-2 h-4 w-4" />解析並加入行事曆
                 </Button>
+                <Button variant="outline" onClick={openAddForm} className="w-full rounded-xl">
+                  <Pencil className="mr-2 h-4 w-4" />手動輸入新增
+                </Button>
                 <AnimatePresence>
                   {message && (
                     <motion.div
@@ -1066,6 +1132,92 @@ export default function TennisCalendar() {
                   取消
                 </Button>
                 <Button className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={saveEditItem}>
+                  儲存
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {addForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+            onClick={cancelAddForm}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-xl"
+            >
+              <h3 className="mb-4 text-lg font-bold text-slate-800">新增預約</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">場地</label>
+                  <select
+                    value={addForm.court}
+                    onChange={(e) => setAddForm((f) => ({ ...f, court: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">狀態</label>
+                  <select
+                    value={addForm.status}
+                    onChange={(e) => setAddForm((f) => ({ ...f, status: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">日期</label>
+                  <input
+                    type="date"
+                    value={addForm.date}
+                    onChange={(e) => setAddForm((f) => ({ ...f, date: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">時段（以逗號分隔，例如 18:00,19:00）</label>
+                  <input
+                    type="text"
+                    value={addForm.times}
+                    onChange={(e) => setAddForm((f) => ({ ...f, times: e.target.value }))}
+                    placeholder="18:00,19:00"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">備註（選填）</label>
+                  <input
+                    type="text"
+                    value={addForm.note}
+                    onChange={(e) => setAddForm((f) => ({ ...f, note: e.target.value }))}
+                    placeholder="例如：下雨備案"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  />
+                </div>
+              </div>
+              <div className="mt-5 flex gap-2">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={cancelAddForm}>
+                  取消
+                </Button>
+                <Button className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={saveAddForm}>
                   儲存
                 </Button>
               </div>
