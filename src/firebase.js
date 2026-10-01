@@ -64,6 +64,12 @@ export const updateItemNote = (itemId, note) => {
   return update(itemRef, { note });
 };
 
+// Update date/court/status/times on a single item
+export const updateItemDetails = (itemId, details) => {
+  const itemRef = ref(database, `items/${itemId}`);
+  return update(itemRef, details);
+};
+
 // Update all items (for bulk operations)
 export const updateItems = (items) => {
   const itemsRef = ref(database, 'items');

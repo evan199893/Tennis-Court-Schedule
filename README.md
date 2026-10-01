@@ -9,6 +9,7 @@ A React + Vite app for managing tennis court bookings, with paste-and-parse sche
 - 🔄 Real-time sync through Firebase Realtime Database
 - 🔐 Anonymous sign-in with Firebase, no account required
 - 📋 Bulk booking import from pasted text
+- ✏️ Password-protected editing of an existing booking's court, status, date, and times
 - 🗑️ Delete bookings directly from the calendar or details panel
 - 📱 Responsive layout for desktop and mobile
 - 🔔 iCalendar (.ics) subscription feed for iOS and Android calendars

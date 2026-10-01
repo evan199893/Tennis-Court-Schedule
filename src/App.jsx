@@ -18,12 +18,22 @@ import {
   MapPin,
   StickyNote,
   Umbrella,
+  Pencil,
 } from "lucide-react";
 import { Button } from "./components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/Card";
 import { Textarea } from "./components/Textarea";
 import { Badge } from "./components/Badge";
-import { initializeAuth, onAuthChange, getItems, addItem, removeItemFromFirebase, updateItemNote, database } from "./firebase";
+import {
+  initializeAuth,
+  onAuthChange,
+  getItems,
+  addItem,
+  removeItemFromFirebase,
+  updateItemNote,
+  updateItemDetails,
+  database,
+} from "./firebase";
 
 const INITIAL_TEXT = `Happy Hour星空網球場A
 已預約
@@ -365,6 +375,7 @@ export default function TennisCalendar() {
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [loaded, setLoaded] = useState(false);
   const [user, setUser] = useState(null);
+  const [editForm, setEditForm] = useState(null);
 
   const icsHttpUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -585,6 +596,61 @@ export default function TennisCalendar() {
         console.error("Error removing item from Firebase:", error);
         setMessage("刪除預約時出錯，請稍後再試。");
       });
+  }
+
+  function openEditItem(item) {
+    if (!requirePassword("edit a booking")) {
+      setMessage("Access denied. Invalid password.");
+      return;
+    }
+
+    setEditForm({
+      id: item.id,
+      court: item.court,
+      status: item.status,
+      date: item.date,
+      times: item.times.join(","),
+    });
+  }
+
+  function cancelEditItem() {
+    setEditForm(null);
+  }
+
+  async function saveEditItem() {
+    if (!editForm) return;
+
+    const date = editForm.date.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      setMessage("日期格式錯誤，請使用 YYYY-MM-DD。");
+      return;
+    }
+
+    const times = [...new Set(editForm.times.split(/[,，、\s]+/).map(normalizeTime).filter(Boolean))].sort();
+    if (!times.length) {
+      setMessage("請輸入至少一個有效時段，例如 18:00。");
+      return;
+    }
+
+    const updated = { date, court: editForm.court, status: editForm.status, times };
+
+    if (!database || !user) {
+      setItems((prev) => prev.map((x) => (x.id === editForm.id ? { ...x, ...updated } : x)));
+      setEditForm(null);
+      setMessage("已更新預約（本機暫存）。");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
+
+    try {
+      await updateItemDetails(editForm.id, updated);
+      setEditForm(null);
+      setMessage("已更新預約。");
+      setTimeout(() => setMessage(""), 2000);
+    } catch (error) {
+      console.error("Error updating item:", error);
+      setMessage("更新預約時出錯，請稍後再試。");
+    }
   }
 
   async function editNote(item) {
@@ -836,6 +902,9 @@ export default function TennisCalendar() {
                         <div className="min-w-0 flex-1">
                           <EventPill item={item} onDelete={removeItem} />
                         </div>
+                        <Button variant="ghost" size="icon" className="shrink-0 rounded-xl text-slate-400 hover:text-emerald-600" onClick={() => openEditItem(item)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="shrink-0 rounded-xl text-slate-400 hover:text-sky-600" onClick={() => editNote(item)}>
                           <StickyNote className="h-4 w-4" />
                         </Button>
@@ -928,6 +997,82 @@ export default function TennisCalendar() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {editForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+            onClick={cancelEditItem}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-xl"
+            >
+              <h3 className="mb-4 text-lg font-bold text-slate-800">編輯預約</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">場地</label>
+                  <select
+                    value={editForm.court}
+                    onChange={(e) => setEditForm((f) => ({ ...f, court: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">狀態</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">日期</label>
+                  <input
+                    type="date"
+                    value={editForm.date}
+                    onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-500">時段（以逗號分隔，例如 18:00,19:00）</label>
+                  <input
+                    type="text"
+                    value={editForm.times}
+                    onChange={(e) => setEditForm((f) => ({ ...f, times: e.target.value }))}
+                    placeholder="18:00,19:00"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                  />
+                </div>
+              </div>
+              <div className="mt-5 flex gap-2">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={cancelEditItem}>
+                  取消
+                </Button>
+                <Button className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={saveEditItem}>
+                  儲存
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <footer className="mx-auto mt-4 max-w-7xl pb-3">
         <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-sm backdrop-blur">
